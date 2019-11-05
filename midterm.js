@@ -4,11 +4,15 @@
 
     let data = "no data";
     let svgContainer = ""; // keep SVG reference in global scope
-    let svgContainer1 = "";
     let circles = "";
     let div = "";
     let selected = "All";
     let selected1 = "All";
+    let coordsX = [];
+    let coordsY = [];
+    let sp_def_data = [];
+    let total_data = [];
+    let count = 0;
     const colors = {
 
         "Bug": "#4E79A7",
@@ -45,15 +49,16 @@
 
     // load data and make scatter plot after window loads
     window.onload = function () {
+
         svgContainer = d3.select('body')
             .append('svg')
-            .attr('width', 500)
-            .attr('height', 500);
+            .attr('width', 1200)
+            .attr('height', 1000);
 
-        svgContainer1 = d3.select('body')
-            .append('svg')
-            .attr('width', 500)
-            .attr('height', 500);
+        // svgContainer1 = d3.select('body')
+        //     .append('svg')
+        //     .attr('width', 200)
+        //     .attr('height', 500);
 
         // d3.csv is basically fetch but it can be be passed a csv file as a parameter
         d3.csv("pokemon.csv")
@@ -63,6 +68,7 @@
     }
 
     function dropDown(csvData) {
+
         var dropDown = d3.select("#filter").append("select")
             .attr("name", "Generation");
 
@@ -168,8 +174,8 @@
         data = csvData // assign data as global variable
 
         // get arrays of fertility rate data and life Expectancy data
-        let sp_def_data = data.map((row) => parseFloat(row["Sp. Def"]));
-        let total_data = data.map((row) => parseFloat(row["Total"]));
+        sp_def_data = data.map((row) => parseFloat(row["Sp. Def"]));
+        total_data = data.map((row) => parseFloat(row["Total"]));
 
         // find data limits
         let axesLimits = findMinMax(sp_def_data, total_data);
@@ -187,19 +193,19 @@
     // make title and axes labels
     function makeLabels() {
         svgContainer.append('text')
-            .attr('x', 100)
+            .attr('x', 300)
             .attr('y', 40)
             .style('font-size', '14pt')
             .text("Pokemon: Special Defense vs Total Stats");
 
         svgContainer.append('text')
-            .attr('x', 220)
-            .attr('y', 490)
+            .attr('x', 470)
+            .attr('y', 790)
             .style('font-size', '10pt')
             .text('Sp. Def');
 
         svgContainer.append('text')
-            .attr('transform', 'translate(15, 260)rotate(-90)')
+            .attr('transform', 'translate(15, 390)rotate(-90)')
             .style('font-size', '10pt')
             .text('Total');
     }
@@ -212,11 +218,12 @@
         let xMap = map.x;
         let yMap = map.y;
 
-
         // make tooltip
         div = d3.select("body").append("div")
             .attr("class", "tooltip")
             .style("opacity", 0);
+
+
 
         // append data to SVG and plot as points
         circles = svgContainer.selectAll('.dot')
@@ -230,12 +237,31 @@
             .attr('fill', (d) => { return colors[d["Type 1"]]; })
             // add tooltip functionality to points
             .on("mouseover", (d) => {
-                div.transition()
-                    .duration(200)
-                    .style("opacity", .9);
-                div.html(d["Name"] + "<br/>" + d["Type 1"] + "<br/>" + d["Type 2"])
-                    .style("left", (d3.event.pageX) + "px")
-                    .style("top", (d3.event.pageY - 28) + "px");
+                count = 0;
+
+                for (var i = 0; i < sp_def_data.length; i++) {
+                    var x = sp_def_data[i];
+                    var y = total_data[i];
+                    if (x == d3.event.pageX && y == d3.event.pageY) {
+                        count = count + 1;
+                    }
+                }
+                if (count > 1) {
+                    // show all tooltips at that area
+                    div.transition()
+                        .duration(200)
+                        .style("opacity", .9);
+                    div.html(d["Name"] + "<br/>" + d["Type 1"] + "<br/>" + d["Type 2"])
+                        .style("left", (d3.event.pageX) + "px")
+                        .style("top", (d3.event.pageY - 68) + "px");
+                } else {
+                    div.transition()
+                        .duration(200)
+                        .style("opacity", .9);
+                    div.html(d["Name"] + "<br/>" + d["Type 1"] + "<br/>" + d["Type 2"])
+                        .style("left", (d3.event.pageX) + "px")
+                        .style("top", (d3.event.pageY - 28) + "px");
+                }
             })
             .on("mouseout", (d) => {
                 div.transition()
@@ -243,22 +269,28 @@
                     .style("opacity", 0);
             });
 
-        svgContainer1.selectAll("mydots")
+        svgContainer.append("text")
+            .attr("x", 1000)
+            .attr("y", 90)
+            .text("Type 1")
+            .style("font-weight", "bold");
+
+        svgContainer.selectAll("mydots")
             .data(Object.keys(colors))
             .enter()
-            .append("circle")
-            .attr("cx", 100)
-            .attr("cy", function (d, i) { return 100 + i * 25 }) // 100 is where the first dot appears. 25 is the distance between dots
-            .attr("r", 7)
+            .append("rect")
+            .attr("x", 1000)
+            .attr("y", function (d, i) { return 100 + i * 25 }) // 100 is where the first dot appears. 25 is the distance between dots
+            .attr("width", 10)
+            .attr("height", 10)
             .style("fill", (d) => { return colors[d]; });
 
-        svgContainer1.selectAll("mylabels")
+        svgContainer.selectAll("mylabels")
             .data(Object.keys(colors))
             .enter()
             .append("text")
-            .attr("x", 120)
-            .attr("y", function (d, i) { return 100 + i * 25 }) // 100 is where the first dot appears. 25 is the distance between dots
-            //   .style("fill", function(d){ return color(d)})
+            .attr("x", 1020)
+            .attr("y", function (d, i) { return 106 + i * 25 }) // 100 is where the first dot appears. 25 is the distance between dots
             .text(function (d) { return d })
             .attr("text-anchor", "left")
             .style("alignment-baseline", "middle");
@@ -268,32 +300,31 @@
     // draw the axes and ticks
     function drawAxes(limits, x, y) {
         // return x value from a row of data
-        let xValue = function (d) { return +d[x]; }
-
+        let xValue = function (d) { return +d[x]; };
         // function to scale x value
         let xScale = d3.scaleLinear()
             .domain([limits.xMin - 0.5, limits.xMax + 0.5]) // give domain buffer room
-            .range([50, 450]);
+            .range([50, 950]);
 
         // xMap returns a scaled x value from a row of data
-        let xMap = function (d) { return xScale(xValue(d)); };
+        let xMap = function (d) { storeCoordinateX(xScale(xValue(d)), coordsX); return xScale(xValue(d)); };
 
         // plot x-axis at bottom of SVG
         let xAxis = d3.axisBottom().scale(xScale);
         svgContainer.append("g")
-            .attr('transform', 'translate(0, 450)')
+            .attr('transform', 'translate(0, 750)')
             .call(xAxis);
 
         // return y value from a row of data
-        let yValue = function (d) { return +d[y] }
+        let yValue = function (d) { return +d[y]; }
 
         // function to scale y
         let yScale = d3.scaleLinear()
             .domain([limits.yMax + 5, limits.yMin - 5]) // give domain buffer
-            .range([50, 450]);
+            .range([50, 750]);
 
         // yMap returns a scaled y value from a row of data
-        let yMap = function (d) { return yScale(yValue(d)); };
+        let yMap = function (d) { storeCoordinateY(yScale(yValue(d)), coordsY); return yScale(yValue(d)); };
 
         // plot y-axis at the left of SVG
         let yAxis = d3.axisLeft().scale(yScale);
@@ -330,5 +361,11 @@
         }
     }
 
+    function storeCoordinateX(xVal, array) {
+        array.push({ x: Math.round(xVal) });
+    }
 
+    function storeCoordinateY(yVal, array) {
+        array.push({ y: Math.round(yVal) });
+    }
 })();
